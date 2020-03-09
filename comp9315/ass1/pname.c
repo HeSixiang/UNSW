@@ -76,8 +76,8 @@ pname_in(PG_FUNCTION_ARGS)
 	if (is_person(str) != 0) {
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-				 errmsg("invalid input syntax for type %s: \"%s\"",
-						"PersonName", str)));
+				 errmsg("invalid input syntax for type PersonName", str)
+				));
 	}
 	//dealing with the possible space after ','
 	name_len = strlen(str);
@@ -277,3 +277,15 @@ pname_hash(PG_FUNCTION_ARGS)
 					);
 	PG_RETURN_INT32(hash_code);
 }
+
+PG_FUNCTION_INFO_V1(pname_cmp);
+
+Datum
+pname_cmp(PG_FUNCTION_ARGS)
+{
+	PersonName    *a = (PersonName *) PG_GETARG_POINTER(0);
+	PersonName    *b = (PersonName *) PG_GETARG_POINTER(1);
+
+	PG_RETURN_INT32(pname_cmp_internal(a, b));
+}
+
