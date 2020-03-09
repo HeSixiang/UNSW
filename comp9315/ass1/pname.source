@@ -53,7 +53,7 @@ CREATE FUNCTION pname_out(PersonName)
 CREATE TYPE PersonName (
    internallength = variable,
    input = pname_in,
-   output = pname_out,
+   output = pname_out
 );
 
 -----------------------------
@@ -104,33 +104,33 @@ CREATE FUNCTION pname_neq(PersonName, PersonName) RETURNS bool
 
 CREATE OPERATOR < (
    leftarg = PersonName, rightarg = PersonName, procedure = pname_lt,
-   commutator > <> >= , negator = <= < ,
+   commutator = > , negator = >= ,
    restrict = scalarltsel, join = scalarltjoinsel
 );
 CREATE OPERATOR <= (
    leftarg = PersonName, rightarg = PersonName, procedure = pname_le,
-   commutator >= , negator < ,
+   commutator = >= , negator = > ,
    restrict = scalarlesel, join = scalarlejoinsel
 );
 
 CREATE OPERATOR = (
    leftarg = PersonName, rightarg = PersonName, procedure = pname_eq,
-   commutator = <= >= , negator <> > < ,
+   commutator = = , negator = <> ,
    restrict = eqsel, join = eqjoinsel
 );
 CREATE OPERATOR >= (
    leftarg = PersonName, rightarg = PersonName, procedure = pname_ge,
-   commutator <= , negator > ,
+   commutator = <= , negator = < ,
    restrict = scalargesel, join = scalargejoinsel
 );
 CREATE OPERATOR > (
    leftarg = PersonName, rightarg = PersonName, procedure = pname_gt,
-   commutator < <> <= , negator = >= > ,
+   commutator = < , negator = <= ,
    restrict = scalargtsel, join = scalargtjoinsel
 );
 CREATE OPERATOR <> (
    leftarg = PersonName, rightarg = PersonName, procedure = pname_neq,
-   commutator <> , negator = ,
+   commutator = <> , negator = = ,
    restrict = neqsel, join = neqjoinsel
 );
 
