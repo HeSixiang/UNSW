@@ -71,6 +71,7 @@ pname_in(PG_FUNCTION_ARGS)
 {
 	char	   *str = PG_GETARG_CSTRING(0);
 	int name_len, family_len, given_len;
+	char * given;
 	if (is_person(str) != 0) {
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
@@ -79,7 +80,7 @@ pname_in(PG_FUNCTION_ARGS)
 	}
 	//dealing with the possible space after ','
 	name_len = strlen(str);
-	char * given = strchr(str, ',');
+	given = strchr(str, ',');
 	given++;
 	family_len = name_len - strlen(given);
 	if (given[0] == ' ') {
@@ -87,7 +88,8 @@ pname_in(PG_FUNCTION_ARGS)
 		given++;
 	}
 	given_len = strlen(given);
-	PersonName * destination = (PersonName *) palloc(VARHDRSZ + sizeof(char) * (name_len + 1));
+	PersonName * destination;
+	destination = (PersonName *) palloc(VARHDRSZ + sizeof(char) * (name_len + 1));
 	SET_VARSIZE(destination, VARHDRSZ + sizeof(char) * (name_len + 1));
 
 	//put the value in 
@@ -245,7 +247,8 @@ show(PG_FUNCTION_ARGS)
         given_len = strlen(given) - strlen(space);
     }
 	
-	char * temp = (char *) palloc(sizeof(char) * (family_len+given_len+2));
+	char * temp;
+	temp = (char *) palloc(sizeof(char) * (family_len+given_len+2));
 
     memcpy(temp, given, given_len);
     memcpy(temp+given_len, " ", 1);
