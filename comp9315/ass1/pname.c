@@ -126,9 +126,21 @@ pname_out(PG_FUNCTION_ARGS)
 static int
 pname_cmp_internal(PersonName * a, PersonName * b)
 {
+	char* a_given, b_given;
+	int result;
 	char* a_name = a->name;
 	char* b_name = b->name;
-	return strcmp(a_name, b_name);
+	a_given = strchr(a_name, ',');
+	b_given = strchr(b_name, ',');
+	a_given[0] = '\0';
+	b_given[0] = '\0';
+	result = strcmp(a_name, b_name);
+	a_given[0] = ',';
+	b_given[0] = ',';
+	if (result != 0) {
+		return result;
+	} 
+	return strcmp(a_given+1, b_given+1);
 }
 
 
