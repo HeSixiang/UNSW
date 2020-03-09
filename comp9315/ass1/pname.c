@@ -76,7 +76,7 @@ pname_in(PG_FUNCTION_ARGS)
 	if (is_person(str) != 0) {
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-				 errmsg("invalid input syntax for type PersonName", str)
+				 errmsg("invalid input syntax for type PersonName")
 				));
 	}
 	//dealing with the possible space after ','
@@ -126,7 +126,8 @@ pname_out(PG_FUNCTION_ARGS)
 static int
 pname_cmp_internal(PersonName * a, PersonName * b)
 {
-	char* a_given, b_given;
+	char* a_given;
+	char* b_given;
 	int result;
 	char* a_name = a->name;
 	char* b_name = b->name;
