@@ -1,6 +1,5 @@
 /*
- * src/tutorial/complex.c
- *
+
  ******************************************************************************
   This file contains routines that can be bound to a Postgres backend and
   called by the backend in the process of processing queries.  The calling
@@ -12,106 +11,101 @@
 #include "fmgr.h"
 #include "libpq/pqformat.h"		/* needed for send/recv functions */
 
+#include <string.h>
+#include <regex.h>
+
+#include "utils/hashutils.h"
+
 PG_MODULE_MAGIC;
 
-typedef struct Complex
-{
-	double		x;
-	double		y;
-}			Complex;
+static int is_person(const char * c);
+static int pname_cmp_internal(PersonName * a, PersonName * b);
 
+/*  
+PersonName ::= Family','Given | Family', 'Given
+
+^[A-Z]([A-Z]|[a-z]|[-]|['])+([ ][A-Z]([A-Z]|[a-z]|[-]|['])+)*,
+[ ]?[A-Z]([A-Z]|[a-z]|[-]|['])+([ ][A-Z]([A-Z]|[a-z]|[-]|['])+)*$
+
+Family     ::= NameList
+Given      ::= NameList
+
+NameList   ::= Name | Name' 'NameList     [A-Z]([A-Z]|[a-z]|[-]|['])+([ ][A-Z]([A-Z]|[a-z]|[-]|['])+)*
+
+Name       ::= Upper Letters              [A-Z]([A-Z]|[a-z]|[-]|['])+
+
+Letter     ::= Upper | Lower | Punc       ([A-Z]|[a-z]|[-]|['])
+
+Letters    ::= Letter | Letter Letters    ([A-Z]|[a-z]|[-]|['])+
+
+Upper      ::= 'A' | 'B' | ... | 'Z'      [A-Z]
+Lower      ::= 'a' | 'b' | ... | 'z'      [a-z]
+Punc       ::= '-' | "'"                  [-']
+*/
+static int is_person(const char * c) {
+    regex_t regex;
+    int result;
+    const char * pattern = "^[A-Z]([A-Z]|[a-z]|[-]|['])+([ ][A-Z]([A-Z]|[a-z]|[-]|['])+)*,"
+                            "[ ]?[A-Z]([A-Z]|[a-z]|[-]|['])+([ ][A-Z]([A-Z]|[a-z]|[-]|['])+)*$";
+    result = regcomp(&regex, pattern, REG_EXTENDED);
+    result = regexec(&regex, c, 0, NULL, 0);
+    regfree(&regex);
+    return result;
+}
+
+typedef struct PersonName
+{
+	int32 length;
+	char  name[FLEXIBLE_ARRAY_MEMBER];
+}			PersonName;
 
 /*****************************************************************************
  * Input/Output functions
  *****************************************************************************/
 
-PG_FUNCTION_INFO_V1(complex_in);
+PG_FUNCTION_INFO_V1(pname_in);
 
 Datum
-complex_in(PG_FUNCTION_ARGS)
+pname_in(PG_FUNCTION_ARGS)
 {
 	char	   *str = PG_GETARG_CSTRING(0);
-	double		x,
-				y;
-	Complex    *result;
 
-	if (sscanf(str, " ( %lf , %lf )", &x, &y) != 2)
+	if (is_person(str) != 0) {
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("invalid input syntax for type %s: \"%s\"",
-						"complex", str)));
+						"PersonName", str)));
+	}
+	//dealing with the possible space after ','
+	int name_len = strlen(str);
+	char * given = strchr(str, ',');
+	given++;
+	int family_len = name_len - strlen(given);
+	if (given[0] == ' ') {
+		name_len = name_len - 1;
+		given++;
+	}
+	int given_len = strlen(given);
+	PersonName * destination = (PersonName *) palloc(VARHDRSZ + sizeof(char) * (name_len + 1));
+	SET_VARSIZE(destination, VARHDRSZ + sizeof(char) * (name_len + 1));
 
-	result = (Complex *) palloc(sizeof(Complex));
-	result->x = x;
-	result->y = y;
-	PG_RETURN_POINTER(result);
+	//put the value in 
+	memcpy(destination->name, str, family_len);
+	memcpy(destination->name+family_len, given, given_len);
+
+	PG_RETURN_POINTER(destination);
 }
 
-PG_FUNCTION_INFO_V1(complex_out);
+PG_FUNCTION_INFO_V1(pname_out);
 
 Datum
-complex_out(PG_FUNCTION_ARGS)
+pname_out(PG_FUNCTION_ARGS)
 {
-	Complex    *complex = (Complex *) PG_GETARG_POINTER(0);
+	PersonName    *pname = (PersonName *) PG_GETARG_POINTER(0);
 	char	   *result;
 
-	result = psprintf("(%g,%g)", complex->x, complex->y);
+	result = psprintf("%s", pname->name);
 	PG_RETURN_CSTRING(result);
-}
-
-/*****************************************************************************
- * Binary Input/Output functions
- *
- * These are optional.
- *****************************************************************************/
-
-PG_FUNCTION_INFO_V1(complex_recv);
-
-Datum
-complex_recv(PG_FUNCTION_ARGS)
-{
-	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
-	Complex    *result;
-
-	result = (Complex *) palloc(sizeof(Complex));
-	result->x = pq_getmsgfloat8(buf);
-	result->y = pq_getmsgfloat8(buf);
-	PG_RETURN_POINTER(result);
-}
-
-PG_FUNCTION_INFO_V1(complex_send);
-
-Datum
-complex_send(PG_FUNCTION_ARGS)
-{
-	Complex    *complex = (Complex *) PG_GETARG_POINTER(0);
-	StringInfoData buf;
-
-	pq_begintypsend(&buf);
-	pq_sendfloat8(&buf, complex->x);
-	pq_sendfloat8(&buf, complex->y);
-	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
-}
-
-/*****************************************************************************
- * New Operators
- *
- * A practical Complex datatype would provide much more than this, of course.
- *****************************************************************************/
-
-PG_FUNCTION_INFO_V1(complex_add);
-
-Datum
-complex_add(PG_FUNCTION_ARGS)
-{
-	Complex    *a = (Complex *) PG_GETARG_POINTER(0);
-	Complex    *b = (Complex *) PG_GETARG_POINTER(1);
-	Complex    *result;
-
-	result = (Complex *) palloc(sizeof(Complex));
-	result->x = a->x + b->x;
-	result->y = a->y + b->y;
-	PG_RETURN_POINTER(result);
 }
 
 
@@ -126,84 +120,149 @@ complex_add(PG_FUNCTION_ARGS)
  * an internal three-way-comparison function, as we do here.
  *****************************************************************************/
 
-#define Mag(c)	((c)->x*(c)->x + (c)->y*(c)->y)
-
 static int
-complex_abs_cmp_internal(Complex * a, Complex * b)
+pname_cmp_internal(PersonName * a, PersonName * b)
 {
-	double		amag = Mag(a),
-				bmag = Mag(b);
-
-	if (amag < bmag)
-		return -1;
-	if (amag > bmag)
-		return 1;
-	return 0;
+	char*		a_name = a->name,
+				b_name = b->name;
+	return strcmp(a_name, b_name);
 }
 
 
-PG_FUNCTION_INFO_V1(complex_abs_lt);
+PG_FUNCTION_INFO_V1(pname_lt);
 
 Datum
-complex_abs_lt(PG_FUNCTION_ARGS)
+pname_lt(PG_FUNCTION_ARGS)
 {
-	Complex    *a = (Complex *) PG_GETARG_POINTER(0);
-	Complex    *b = (Complex *) PG_GETARG_POINTER(1);
+	PersonName    *a = (PersonName *) PG_GETARG_POINTER(0);
+	PersonName    *b = (PersonName *) PG_GETARG_POINTER(1);
 
-	PG_RETURN_BOOL(complex_abs_cmp_internal(a, b) < 0);
+	PG_RETURN_BOOL(pname_cmp_internal(a, b) < 0);
 }
 
-PG_FUNCTION_INFO_V1(complex_abs_le);
+PG_FUNCTION_INFO_V1(pname_le);
 
 Datum
-complex_abs_le(PG_FUNCTION_ARGS)
+pname_le(PG_FUNCTION_ARGS)
 {
-	Complex    *a = (Complex *) PG_GETARG_POINTER(0);
-	Complex    *b = (Complex *) PG_GETARG_POINTER(1);
+	PersonName    *a = (PersonName *) PG_GETARG_POINTER(0);
+	PersonName    *b = (PersonName *) PG_GETARG_POINTER(1);
 
-	PG_RETURN_BOOL(complex_abs_cmp_internal(a, b) <= 0);
+	PG_RETURN_BOOL(pname_cmp_internal(a, b) <= 0);
 }
 
-PG_FUNCTION_INFO_V1(complex_abs_eq);
+PG_FUNCTION_INFO_V1(pname_eq);
 
 Datum
-complex_abs_eq(PG_FUNCTION_ARGS)
+pname_eq(PG_FUNCTION_ARGS)
 {
-	Complex    *a = (Complex *) PG_GETARG_POINTER(0);
-	Complex    *b = (Complex *) PG_GETARG_POINTER(1);
+	PersonName    *a = (PersonName *) PG_GETARG_POINTER(0);
+	PersonName    *b = (PersonName *) PG_GETARG_POINTER(1);
 
-	PG_RETURN_BOOL(complex_abs_cmp_internal(a, b) == 0);
+	PG_RETURN_BOOL(pname_cmp_internal(a, b) == 0);
 }
 
-PG_FUNCTION_INFO_V1(complex_abs_ge);
+PG_FUNCTION_INFO_V1(pname_ge);
 
 Datum
-complex_abs_ge(PG_FUNCTION_ARGS)
+pname_ge(PG_FUNCTION_ARGS)
 {
-	Complex    *a = (Complex *) PG_GETARG_POINTER(0);
-	Complex    *b = (Complex *) PG_GETARG_POINTER(1);
+	PersonName    *a = (PersonName *) PG_GETARG_POINTER(0);
+	PersonName    *b = (PersonName *) PG_GETARG_POINTER(1);
 
-	PG_RETURN_BOOL(complex_abs_cmp_internal(a, b) >= 0);
+	PG_RETURN_BOOL(pname_cmp_internal(a, b) >= 0);
 }
 
-PG_FUNCTION_INFO_V1(complex_abs_gt);
+PG_FUNCTION_INFO_V1(pname_gt);
 
 Datum
-complex_abs_gt(PG_FUNCTION_ARGS)
+pname_gt(PG_FUNCTION_ARGS)
 {
-	Complex    *a = (Complex *) PG_GETARG_POINTER(0);
-	Complex    *b = (Complex *) PG_GETARG_POINTER(1);
+	PersonName    *a = (PersonName *) PG_GETARG_POINTER(0);
+	PersonName    *b = (PersonName *) PG_GETARG_POINTER(1);
 
-	PG_RETURN_BOOL(complex_abs_cmp_internal(a, b) > 0);
+	PG_RETURN_BOOL(pname_cmp_internal(a, b) > 0);
 }
 
-PG_FUNCTION_INFO_V1(complex_abs_cmp);
+PG_FUNCTION_INFO_V1(pname_neq);
 
 Datum
-complex_abs_cmp(PG_FUNCTION_ARGS)
+pname_neq(PG_FUNCTION_ARGS)
 {
-	Complex    *a = (Complex *) PG_GETARG_POINTER(0);
-	Complex    *b = (Complex *) PG_GETARG_POINTER(1);
+	PersonName    *a = (PersonName *) PG_GETARG_POINTER(0);
+	PersonName    *b = (PersonName *) PG_GETARG_POINTER(1);
 
-	PG_RETURN_INT32(complex_abs_cmp_internal(a, b));
+	PG_RETURN_BOOL(pname_cmp_internal(a, b) != 0);
+}
+
+PG_FUNCTION_INFO_V1(family);
+
+Datum
+family(PG_FUNCTION_ARGS)
+{
+	PersonName    *pname = (PersonName *) PG_GETARG_POINTER(0);
+	char	   *result;
+	char * str = pname->name;
+	char * temp = strchr(str, ',');
+	temp[0] = '\0'
+	result = psprintf("%s", str);
+	temp[0] = ','
+	PG_RETURN_CSTRING(result);
+}
+
+PG_FUNCTION_INFO_V1(given);
+
+Datum
+given(PG_FUNCTION_ARGS)
+{
+	PersonName    *pname = (PersonName *) PG_GETARG_POINTER(0);
+	char	   *result;
+	char * str = pname->name;
+	char * temp = strchr(str, ',');
+	result = psprintf("%s", temp);
+	PG_RETURN_CSTRING(result);
+}
+
+PG_FUNCTION_INFO_V1(show);
+
+Datum
+show(PG_FUNCTION_ARGS)
+{
+	PersonName    *pname = (PersonName *) PG_GETARG_POINTER(0);
+	char	   *result;
+	char * str = pname->name;
+	
+	char * given = strchr(str, ',');
+    char * space = strchr(given, ' ');
+    int family_len = strlen(str) - strlen(given);
+    given++;
+    int given_len = 0;
+    if (space == NULL) {
+        given_len = strlen(given);
+    } else {
+        given_len = strlen(given) - strlen(space);
+    }
+	
+	char * temp = (char *) palloc(sizeof(char) * (family_len+given_len+2));
+
+    memcpy(temp, given, given_len);
+    memcpy(temp+given_len, " ", 1);
+    memcpy(temp+given_len+1, str, family_len);
+    memcpy(temp+given_len+1+family_len, "\0", 1);
+ 
+    result = psprintf("%s", temp);
+
+	pfree(temp);
+
+	PG_RETURN_CSTRING(result);
+}
+
+PG_FUNCTION_INFO_V1(pname_hash);
+
+Datum
+pname_hash(PG_FUNCTION_ARGS)
+{
+	PersonName    *pname = (PersonName *) PG_GETARG_POINTER(0);
+	int hash_code = DatumGetInt32((unsigned char *) pname->name, sizeof(char) * strlen(pname->name));
+	PG_RETURN_INT32(hash_code);
 }
