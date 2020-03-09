@@ -72,6 +72,7 @@ pname_in(PG_FUNCTION_ARGS)
 	char	   *str = PG_GETARG_CSTRING(0);
 	int name_len, family_len, given_len;
 	char * given;
+	PersonName * destination;
 	if (is_person(str) != 0) {
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
@@ -88,7 +89,6 @@ pname_in(PG_FUNCTION_ARGS)
 		given++;
 	}
 	given_len = strlen(given);
-	PersonName * destination;
 	destination = (PersonName *) palloc(VARHDRSZ + sizeof(char) * (name_len + 1));
 	SET_VARSIZE(destination, VARHDRSZ + sizeof(char) * (name_len + 1));
 
@@ -232,10 +232,12 @@ Datum
 show(PG_FUNCTION_ARGS)
 {
 	PersonName    *pname = (PersonName *) PG_GETARG_POINTER(0);
-	char	   *result;
-	char * str = pname->name;
+	char *result;
+	char * temp;
 	int given_len;
 	
+	char * str = pname->name;
+
 	char * given = strchr(str, ',');
     char * space = strchr(given, ' ');
     int family_len = strlen(str) - strlen(given);
@@ -247,7 +249,6 @@ show(PG_FUNCTION_ARGS)
         given_len = strlen(given) - strlen(space);
     }
 	
-	char * temp;
 	temp = (char *) palloc(sizeof(char) * (family_len+given_len+2));
 
     memcpy(temp, given, given_len);
