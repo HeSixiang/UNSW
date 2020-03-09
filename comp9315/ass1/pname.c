@@ -141,7 +141,7 @@ pname_cmp_internal(PersonName * a, PersonName * b)
 	if (result != 0) {
 		return result;
 	} 
-	return strcmp(&a_given[1], &b_given[1]);
+	return strcmp(a_given, b_given);
 }
 
 
@@ -232,11 +232,13 @@ Datum
 given(PG_FUNCTION_ARGS)
 {
 	PersonName    *pname = (PersonName *) PG_GETARG_POINTER(0);
-	char	   *result;
+	char * result;
 	char * str = pname->name;
 	char * temp = strchr(str, ',');
-	result = psprintf("%s", ++temp);
-	PG_RETURN_CSTRING(result);
+	int length= strlen(str) - strlen(temp);
+	result = (char*)palloc(sizeof(char)*length + 1);
+	memcpy(result, temp, length + 1);
+	PG_RETURN_TEXT_P(cstring_to_text(result));
 }
 
 PG_FUNCTION_INFO_V1(show);
