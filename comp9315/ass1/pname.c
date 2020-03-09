@@ -124,7 +124,7 @@ pname_out(PG_FUNCTION_ARGS)
 static int
 pname_cmp_internal(PersonName * a, PersonName * b)
 {
-	char* a_name = a->name,
+	char* a_name = a->name;
 	char* b_name = b->name;
 	return strcmp(a_name, b_name);
 }
@@ -265,6 +265,11 @@ Datum
 pname_hash(PG_FUNCTION_ARGS)
 {
 	PersonName    *pname = (PersonName *) PG_GETARG_POINTER(0);
-	int hash_code = DatumGetInt32((unsigned char *) pname->name, sizeof(char) * strlen(pname->name));
+	int hash_code = DatumGetInt32(
+						hash_any(
+							(unsigned char *) pname->name, 
+							sizeof(char) * strlen(pname->name)
+						)
+					);
 	PG_RETURN_INT32(hash_code);
 }
