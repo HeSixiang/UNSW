@@ -222,7 +222,7 @@ given(PG_FUNCTION_ARGS)
 	char	   *result;
 	char * str = pname->name;
 	char * temp = strchr(str, ',');
-	result = psprintf("%s", temp);
+	result = psprintf("%s", ++temp);
 	PG_RETURN_CSTRING(result);
 }
 
