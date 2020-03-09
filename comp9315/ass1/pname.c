@@ -18,9 +18,6 @@
 
 PG_MODULE_MAGIC;
 
-static int is_person(const char * c);
-static int pname_cmp_internal(PersonName * a, PersonName * b);
-
 /*  
 PersonName ::= Family','Given | Family', 'Given
 
@@ -57,7 +54,11 @@ typedef struct PersonName
 {
 	int32 length;
 	char  name[FLEXIBLE_ARRAY_MEMBER];
-}			PersonName;
+}	PersonName;
+
+
+static int is_person(const char * c);
+static int pname_cmp_internal(PersonName * a, PersonName * b);
 
 /*****************************************************************************
  * Input/Output functions
@@ -69,7 +70,7 @@ Datum
 pname_in(PG_FUNCTION_ARGS)
 {
 	char	   *str = PG_GETARG_CSTRING(0);
-
+	int name_len, family_len, given_len;
 	if (is_person(str) != 0) {
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
@@ -77,15 +78,15 @@ pname_in(PG_FUNCTION_ARGS)
 						"PersonName", str)));
 	}
 	//dealing with the possible space after ','
-	int name_len = strlen(str);
+	name_len = strlen(str);
 	char * given = strchr(str, ',');
 	given++;
-	int family_len = name_len - strlen(given);
+	family_len = name_len - strlen(given);
 	if (given[0] == ' ') {
 		name_len = name_len - 1;
 		given++;
 	}
-	int given_len = strlen(given);
+	given_len = strlen(given);
 	PersonName * destination = (PersonName *) palloc(VARHDRSZ + sizeof(char) * (name_len + 1));
 	SET_VARSIZE(destination, VARHDRSZ + sizeof(char) * (name_len + 1));
 
@@ -123,8 +124,8 @@ pname_out(PG_FUNCTION_ARGS)
 static int
 pname_cmp_internal(PersonName * a, PersonName * b)
 {
-	char*		a_name = a->name,
-				b_name = b->name;
+	char* a_name = a->name,
+	char* b_name = b->name;
 	return strcmp(a_name, b_name);
 }
 
@@ -204,9 +205,9 @@ family(PG_FUNCTION_ARGS)
 	char	   *result;
 	char * str = pname->name;
 	char * temp = strchr(str, ',');
-	temp[0] = '\0'
+	temp[0] = '\0';
 	result = psprintf("%s", str);
-	temp[0] = ','
+	temp[0] = ',';
 	PG_RETURN_CSTRING(result);
 }
 
@@ -231,12 +232,13 @@ show(PG_FUNCTION_ARGS)
 	PersonName    *pname = (PersonName *) PG_GETARG_POINTER(0);
 	char	   *result;
 	char * str = pname->name;
+	int given_len;
 	
 	char * given = strchr(str, ',');
     char * space = strchr(given, ' ');
     int family_len = strlen(str) - strlen(given);
     given++;
-    int given_len = 0;
+    given_len = 0;
     if (space == NULL) {
         given_len = strlen(given);
     } else {
