@@ -94,7 +94,7 @@ pname_in(PG_FUNCTION_ARGS)
 
 	//put the value in 
 	memcpy(destination->name, str, family_len);
-	memcpy(destination->name+family_len, given, given_len);
+	memcpy(destination->name+family_len, given, given_len+1);
 
 	PG_RETURN_POINTER(destination);
 }
