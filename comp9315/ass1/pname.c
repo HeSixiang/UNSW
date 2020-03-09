@@ -140,7 +140,7 @@ pname_cmp_internal(PersonName * a, PersonName * b)
 	if (result != 0) {
 		return result;
 	} 
-	return strcmp(a_given+1, b_given+1);
+	return strcmp(&a_given[1], &b_given[1]);
 }
 
 
