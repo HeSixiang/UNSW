@@ -223,7 +223,7 @@ family(PG_FUNCTION_ARGS)
 	char * temp = strchr(str, ',');
 	int length= strlen(str) - strlen(temp);
 	result = (char*)palloc(sizeof(char)*length + 1);
-	memcpy(result, temp, length);
+	memcpy(result, str, length);
 	memcpy(result+length, "\0", 1);
 	PG_RETURN_TEXT_P(cstring_to_text(result));
 }
