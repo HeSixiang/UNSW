@@ -15,6 +15,7 @@
 #include <regex.h>
 
 #include "utils/hashutils.h"
+#include "utils/builtins.h"
 
 PG_MODULE_MAGIC;
 
@@ -217,13 +218,14 @@ Datum
 family(PG_FUNCTION_ARGS)
 {
 	PersonName    *pname = (PersonName *) PG_GETARG_POINTER(0);
-	char	   *result;
+	char * result;
 	char * str = pname->name;
 	char * temp = strchr(str, ',');
-	temp[0] = '\0';
-	result = psprintf("%s", str);
-	temp[0] = ',';
-	PG_RETURN_CSTRING(result);
+	int length= strlen(str) - strlen(temp);
+	result = (char*)palloc(sizeof(char)*length + 1);
+	memcpy(result, temp, length);
+	memcpy(result+length, "\0", 1);
+	PG_RETURN_TEXT_P(cstring_to_text(result));
 }
 
 PG_FUNCTION_INFO_V1(given);
@@ -232,10 +234,11 @@ Datum
 given(PG_FUNCTION_ARGS)
 {
 	PersonName    *pname = (PersonName *) PG_GETARG_POINTER(0);
-	char * result;
+	char *result;
 	char * str = pname->name;
 	char * temp = strchr(str, ',');
-	int length= strlen(str) - strlen(temp);
+	temp++;
+	int length= strlen(temp);
 	result = (char*)palloc(sizeof(char)*length + 1);
 	memcpy(result, temp, length + 1);
 	PG_RETURN_TEXT_P(cstring_to_text(result));
@@ -247,7 +250,6 @@ Datum
 show(PG_FUNCTION_ARGS)
 {
 	PersonName    *pname = (PersonName *) PG_GETARG_POINTER(0);
-	char *result;
 	char * temp;
 	int given_len;
 	
@@ -271,11 +273,7 @@ show(PG_FUNCTION_ARGS)
     memcpy(temp+given_len+1, str, family_len);
     memcpy(temp+given_len+1+family_len, "\0", 1);
  
-    result = psprintf("%s", temp);
-
-	pfree(temp);
-
-	PG_RETURN_CSTRING(result);
+	PG_RETURN_TEXT_P(cstring_to_text(temp));
 }
 
 PG_FUNCTION_INFO_V1(pname_hash);

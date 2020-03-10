@@ -60,13 +60,13 @@ CREATE TYPE PersonName (
 --Create some required functions
 -----------------------------
 
-CREATE FUNCTION family(PersonName) RETURNS cstring
+CREATE FUNCTION family(PersonName) RETURNS text
    AS '_OBJWD_/pname' LANGUAGE C IMMUTABLE STRICT;
 
 CREATE FUNCTION given(PersonName) RETURNS text
    AS '_OBJWD_/pname' LANGUAGE C IMMUTABLE STRICT;
 
-CREATE FUNCTION show(PersonName) RETURNS cstring
+CREATE FUNCTION show(PersonName) RETURNS text
    AS '_OBJWD_/pname' LANGUAGE C IMMUTABLE STRICT;
 
 -----------------------------
