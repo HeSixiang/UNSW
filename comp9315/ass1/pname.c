@@ -293,35 +293,20 @@ Datum
 pname_hash(PG_FUNCTION_ARGS)
 {
 	PersonName    *pname = (PersonName *) PG_GETARG_POINTER(0);
-	int len_f;
-	int len_g;
-	char * name;
-	char * given;
-	name = pname->name;
-	given = strchr(name, ',');
-	len_f = strlen(name) - strlen(given);
-	given++;
-	len_g = strlen(given);
-	int hash_code_1 = DatumGetInt32(
+	int hash_code = DatumGetInt32(
 						hash_any(
-							(unsigned char *) name, 
-							sizeof(char) * (len_f)
+							(unsigned char *) pname->name, 
+							sizeof(char) * (strlen(pname->name))
 						)
 					);
-	int hash_code_2 = DatumGetInt32(
-						hash_any(
-							(unsigned char *) given, 
-							sizeof(char) * (len_g)
-						)
-					);
-	PG_RETURN_INT32(hash_code_1 + hash_code_2);
+	PG_RETURN_INT32(hash_code);
 }
-
-PG_FUNCTION_INFO_V1(pname_cmp);
 
 /*****************************************************************************
  * Btree function
  *****************************************************************************/
+
+PG_FUNCTION_INFO_V1(pname_cmp);
 
 Datum
 pname_cmp(PG_FUNCTION_ARGS)
