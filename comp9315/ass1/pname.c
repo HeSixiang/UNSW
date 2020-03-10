@@ -77,7 +77,7 @@ pname_in(PG_FUNCTION_ARGS)
 	if (is_person(str) != 0) {
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-				 errmsg("invalid input syntax for type PersonName")
+				 errmsg("invalid input syntax for type PersonName: \"%s\"", str)
 				));
 	}
 	//dealing with the possible space after ','
@@ -237,8 +237,9 @@ given(PG_FUNCTION_ARGS)
 	char *result;
 	char * str = pname->name;
 	char * temp = strchr(str, ',');
+	int length;
 	temp++;
-	int length= strlen(temp);
+	length = strlen(temp);
 	result = (char*)palloc(sizeof(char)*length + 1);
 	memcpy(result, temp, length + 1);
 	PG_RETURN_TEXT_P(cstring_to_text(result));
