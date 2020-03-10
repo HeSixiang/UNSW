@@ -136,12 +136,14 @@ pname_cmp_internal(PersonName * a, PersonName * b)
 	b_given = strchr(b_name, ',');
 	a_given[0] = '\0';
 	b_given[0] = '\0';
+	//compare the family name first
 	result = strcmp(a_name, b_name);
 	a_given[0] = ',';
 	b_given[0] = ',';
 	if (result != 0) {
 		return result;
 	} 
+	//If family name equal, then compare the given name
 	return strcmp(a_given, b_given);
 }
 
@@ -212,6 +214,10 @@ pname_neq(PG_FUNCTION_ARGS)
 	PG_RETURN_BOOL(pname_cmp_internal(a, b) != 0);
 }
 
+/*****************************************************************************
+ * Some other functions
+ *****************************************************************************/
+
 PG_FUNCTION_INFO_V1(family);
 
 Datum
@@ -277,6 +283,10 @@ show(PG_FUNCTION_ARGS)
 	PG_RETURN_TEXT_P(cstring_to_text(temp));
 }
 
+/*****************************************************************************
+ * Hash function
+ *****************************************************************************/
+
 PG_FUNCTION_INFO_V1(pname_hash);
 
 Datum
@@ -294,6 +304,10 @@ pname_hash(PG_FUNCTION_ARGS)
 
 PG_FUNCTION_INFO_V1(pname_cmp);
 
+/*****************************************************************************
+ * Btree function
+ *****************************************************************************/
+
 Datum
 pname_cmp(PG_FUNCTION_ARGS)
 {
@@ -302,4 +316,3 @@ pname_cmp(PG_FUNCTION_ARGS)
 
 	PG_RETURN_INT32(pname_cmp_internal(a, b));
 }
-
