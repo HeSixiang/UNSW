@@ -296,7 +296,7 @@ pname_hash(PG_FUNCTION_ARGS)
 	int hash_code = DatumGetInt32(
 						hash_any(
 							(unsigned char *) pname->name, 
-							sizeof(char) * strlen(pname->name)
+							sizeof(char) * (strlen(pname->name) + 1)
 						)
 					);
 	PG_RETURN_INT32(hash_code);
