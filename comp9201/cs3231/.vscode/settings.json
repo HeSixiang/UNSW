@@ -1,0 +1,14 @@
+{
+    "files.associations": {
+        "synch.h": "c",
+        "__config": "c",
+        "locale": "c",
+        "err.h": "c",
+        "cstdio": "c",
+        "syscall.h": "c",
+        "types.h": "c",
+        "copyinout.h": "c",
+        "file.h": "c",
+        "endian.h": "c"
+    }
+}
