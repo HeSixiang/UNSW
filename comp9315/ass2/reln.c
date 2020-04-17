@@ -136,7 +136,7 @@ PageID addToRelation(Reln r, Tuple t)
 	putPage(r->dataf, pid, p);
 
 	// compute tuple signature and add to tsigf
-	
+
 	//TODO
 
 	// compute page signature and add to psigf
