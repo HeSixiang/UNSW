@@ -12,6 +12,9 @@
 #include "tsig.h"
 #include "bits.h"
 #include "hash.h"
+
+#include "psig.h"
+
 // open a file with a specified suffix
 // - always open for both reading and writing
 
@@ -118,6 +121,7 @@ PageID addToRelation(Reln r, Tuple t)
 	assert(r != NULL && t != NULL && strlen(t) == tupSize(r));
 	Page p;  PageID pid;
 	RelnParams *rp = &(r->params);
+	Bool craete_new_tupe_page = FALSE;
 	
 	// add tuple to last page
 	pid = rp->npages-1;
@@ -130,18 +134,64 @@ PageID addToRelation(Reln r, Tuple t)
 		free(p);
 		p = newPage();
 		if (p == NULL) return NO_PAGE;
+		craete_new_tupe_page = TRUE;
 	}
 	addTupleToPage(r, p, t);
 	rp->ntups++;  //written to disk in closeRelation()
 	putPage(r->dataf, pid, p);
 
 	// compute tuple signature and add to tsigf
+	// create the signature
+	Bits tsig = makeTupleSig(r, t);
+	pid = rp->tsigNpages - 1; // number of tsig pages
+	p = getPage(r->tsigf, pid);  // handle on tuple signature file
 	
-	//TODO
+	// check if room on last page; if not add new page
+	if (pageNitems(p) == rp->tsigPP) {  // max tuple signatures per page
+		addPage(r->tsigf);
+		rp->tsigNpages++; // number of tsig pages
+		pid++;
+		free(p);
+		p = newPage();
+		if (p == NULL) return NO_PAGE;
+	}
+	putBits(p, pageNitems(p), tsig);
+	addOneItem(p); // p->nitems++; 
+	rp->ntsigs++;     // number of tuple signatures (tsigs)
+	putPage(r->tsigf, pid, p);
+	free(tsig);
 
 	// compute page signature and add to psigf
+	Bits psig = makePageSig(r, t);
+	pid = rp->psigNpages - 1; // number of psig pages
+	p = getPage(r->psigf, pid); // handle on page signature file
 
-	//TODO
+	if (craete_new_tupe_page) {
+		// add new page signature
+		// check if room on last page; if not add new page
+		if (pageNitems(p) == rp->psigPP) {  // max page signatures per page
+			addPage(r->psigf);
+			rp->psigNpages++; // number of psig pages
+			pid++;
+			free(p);
+			p = newPage();
+			if (p == NULL) return NO_PAGE;
+		}
+		putBits(p, pageNitems(p), psig);
+		addOneItem(p); // p->nitems++; 
+		rp->npsigs++;     // number of page signatures (psigs)
+		putPage(r->psigf, pid, p);	
+	} else {
+		// update the last page signature
+		// create a container
+		Bits container = newBits(psigBits(r)); // width of page signature (#bits)
+		getBits(p, pageNitems(p), container);
+		orBits(container, psig);
+		putBits(p, pageNitems(p), container);
+		free(container);
+		putPage(r->psigf, pid, p);
+	}
+	free(psig);
 
 	// use page signature to update bit-slices
 

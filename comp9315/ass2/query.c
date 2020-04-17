@@ -51,11 +51,56 @@ Query startQuery(Reln r, char *q, char sigs)
 // scan through selected pages (q->pages)
 // search for matching tuples and show each
 // accumulate query stats
-
-void scanAndDisplayMatchingTuples(Query q)
-{
+void scanAndDisplayMatchingTuples(Query q){
 	assert(q != NULL);
-	//TODO
+
+	Reln relation_info = q->rel;
+	assert(relation_info != NULL);
+
+	// q->rel->params.npages
+	Count params_npages = nPages(relation_info);
+	File data_file = dataFile(relation_info);
+
+	Tuple target_t = q->qstring; //char * 
+
+	// initialize statistics info
+	q->ntuples = 0;
+	q->nfalse = 0;
+	q->ntuppages = 0;
+
+	// start at page Id 0
+	// foreach PID in 0 .. npages-1 {
+	for (q->curpage = 0; q->curpage < params_npages; q->curpage++) {
+		//if PID is not set in MatchingPages, ignore this page
+		if (!bitIsSet(q->pages, q->curpage)) {
+			continue;
+		}
+		
+		Page current = getPage(data_file, q->curpage);
+		Count num_tuples = pageNitems(current);
+		Bool detect_false_match = TRUE;
+
+		//for each tuple T in page PID
+		for (q->curtup = 0; q->curtup < num_tuples; q->curtup++) {
+			// get data for i'th tuple in Page
+			Tuple current_t = getTupleFromPage(relation_info, current, q->curtup);
+			//if (T matches the query string)
+			if (tupleMatch(relation_info, target_t, current_t)) {
+				//display it as a query result
+				printf("Matched Pages: %d\n", q->curpage);
+				showTuple(relation_info, current_t);
+				detect_false_match = FALSE;
+			}
+			// update how many tuples examined
+			q->ntuples++;
+		}
+		if (detect_false_match) {
+			// update how many pages had no matching tuples
+			q->nfalse++;
+		}
+		// update how many data pages read
+		q->ntuppages++;
+	}
 }
 
 // print statistics on query
