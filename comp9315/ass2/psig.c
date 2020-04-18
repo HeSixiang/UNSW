@@ -56,7 +56,6 @@ Bits makePageSig(Reln r, Tuple t)
 	return psig;
 }
 
-//TODO
 void findPagesUsingPageSigs(Query q)
 {
 	assert(q != NULL);
@@ -103,9 +102,13 @@ void findPagesUsingPageSigs(Query q)
 				setBit(*pages_list, position);
 			}
 			q->nsigs++; // update how many signatures read
-			free(current_sig);
+			freeBits(current_sig);
 		}
 		q->nsigpages++; //update how many signature pages read
 	}
+
+	// The printf below is primarily for debugging
+	// Remove it before submitting this function
+	// printf("Matched Pages:"); showBits(q->pages); putchar('\n');
 }
 

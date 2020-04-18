@@ -87,7 +87,6 @@ void scanAndDisplayMatchingTuples(Query q){
 			//if (T matches the query string)
 			if (tupleMatch(relation_info, target_t, current_t)) {
 				//display it as a query result
-				printf("Matched Pages: %d\n", q->curpage);
 				showTuple(relation_info, current_t);
 				detect_false_match = FALSE;
 			}
