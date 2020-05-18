@@ -8,7 +8,7 @@ System/161 or OS 161 is a synthetic (read: made up) hardware platform designed s
 [OS/161 2.0 Reference Manual 系统手册](http://cgi.cse.unsw.edu.au/~cs3231/16s1/os161/man/index.html)<br/>
 
 ## Project
-熟悉并编写哈佛大学教学操作系统os161（简单版Linux）<br/>
+熟悉并编写教学操作系统os161（简单版Linux）<br/>
 * asst0-src(Getting warmed up): 简单了解os161是如何运行的，同时如何用GDB debug。
 * asst1-src(Synchronisation): 用os161提供的 lock, semaphore 和 condition variable 去解决操作系统的同步（Synchronisation）问题，和如何发现并解决可能出现的死锁（deadlock）。
 * asst2-src(System calls and processes): 实现file syste和procces的一些system call操作 比如： open(), read(), write(), lseek(), close(), dup2(), fork(), getpid() ... <br/>
@@ -19,7 +19,7 @@ System/161 or OS 161 is a synthetic (read: made up) hardware platform designed s
 ### 如何运行os161？
 我用的是mac上的VMware Fusion Linux 模拟器。<br/>
 
-#### Resource
+#### Resources:
 Working on Linux On Debian-based distributions (including Ubuntu, Mint)<br/>
 We have built the cross-compilation tools on Ubuntu amd64. <br/>
 $ wget http://www.cse.unsw.edu.au/~cs3231/os161-files/os161-utils_2.0.8-3.deb <br/>
