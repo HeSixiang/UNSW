@@ -1,0 +1,23 @@
+{
+    "files.associations": {
+        "vfs.h": "c",
+        "vnode.h": "c",
+        "file.h": "c",
+        "errno.h": "c",
+        "addrspace.h": "c",
+        "current.h": "c",
+        "proc.h": "c",
+        "__mutex_base": "c",
+        "memory": "c",
+        "mutex": "c",
+        "typeinfo": "c",
+        "ostream": "cpp",
+        "types.h": "c",
+        "lib.h": "c",
+        "__config": "c",
+        "locale": "c",
+        "syscall.h": "c",
+        "uio.h": "c",
+        "istream": "c"
+    }
+}
