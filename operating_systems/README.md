@@ -1,6 +1,6 @@
 # Operating Systems 操作系统 2020/T1 (COMP9201)
 ## Overview and Links 
-System/161 or OS 161 is a synthetic (read: made up) hardware platform designed specifically for teaching operating systems and for experimental operating system hacking. It includes a simulated CPU, system bus, and bus devices that are realistic but simple and easy to work with.
+System/161 or OS 161 is a synthetic (read: made up) hardware platform designed specifically for teaching operating systems and for experimental operating system hacking. It includes a simulated CPU, system bus, and bus devices that are realistic but simple and easy to work with. <br/>
 [Course Website 课程网站](http://cgi.cse.unsw.edu.au/~cs3231/notices.php)<br/>
 [Similar Course 类似课程网站](https://www.ops-class.org)<br/>
 [Relative Blogs 相关博客](http://jhshi.me/home/)<br/>
@@ -18,11 +18,13 @@ System/161 or OS 161 is a synthetic (read: made up) hardware platform designed s
 
 ### 如何运行os161？
 我用的是mac上的VMware Fusion Linux 模拟器。<br/>
+
+#### Resource
 Working on Linux On Debian-based distributions (including Ubuntu, Mint)<br/>
 We have built the cross-compilation tools on Ubuntu amd64. <br/>
 $ wget http://www.cse.unsw.edu.au/~cs3231/os161-files/os161-utils_2.0.8-3.deb <br/>
 
-To install: <br/>
+#### Install: <br/>
 $ sudo dpkg -i os161-utils_2.0.8-3.deb <br/>
 
 The tools are installed in /usr/local/bin, so you if that directory is not in your PATH already, you'll need to add it via your shell's startup file. <br/>
@@ -34,16 +36,18 @@ $ sudo apt-get install build-essential <br/>
 $ sudo apt-get install python <br/>
 $ sudo apt-get install libmpfr6 <br/>
 
-Testing <br/>
-
+#### Testing
 $ os161-gcc <br/>
 Expected output: <br/>
 os161-gcc: fatal error: no input files <br/>
 compilation terminated. <br/>
 
 If you get the following error when using the tools <br/>
+
 libmpc.so.3: cannot open shared object file: No such file or directory <br/>
+
 then try installing the libmpc3 package <br/>
+
 $ sudo apt-get install libmpc3 <br/>
 
 ## Topics
