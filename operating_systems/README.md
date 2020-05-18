@@ -24,7 +24,7 @@ Working on Linux On Debian-based distributions (including Ubuntu, Mint)<br/>
 We have built the cross-compilation tools on Ubuntu amd64. <br/>
 $ wget http://www.cse.unsw.edu.au/~cs3231/os161-files/os161-utils_2.0.8-3.deb <br/>
 
-#### Install: <br/>
+#### Install:
 $ sudo dpkg -i os161-utils_2.0.8-3.deb <br/>
 
 The tools are installed in /usr/local/bin, so you if that directory is not in your PATH already, you'll need to add it via your shell's startup file. <br/>
@@ -36,7 +36,7 @@ $ sudo apt-get install build-essential <br/>
 $ sudo apt-get install python <br/>
 $ sudo apt-get install libmpfr6 <br/>
 
-#### Testing
+#### Testing:
 $ os161-gcc <br/>
 Expected output: <br/>
 os161-gcc: fatal error: no input files <br/>
