@@ -14,6 +14,7 @@ System/161 or OS 161 is a synthetic (read: made up) hardware platform designed s
 * asst2-src(System calls and processes): 实现file syste和procces的一些system call操作 比如： open(), read(), write(), lseek(), close(), dup2(), fork(), getpid() ... <br/>
 (代码主要在 kern/syscall/file.c, kern/arch/mips/syscall/syscall.c)
 * asst3-src(Virtual Memory): 使系统具有虚拟内存，TLB工作正常，设计是2-level hierarchical page table. <br/>
+[简单介绍什么是TLB (Youtube)](https://www.youtube.com/watch?v=95QpHJX55bM)<br/>
 (代码主要在 kern/vm/addrspace.c, kern/vm/vm.c)
 
 ### 如何运行os161？
